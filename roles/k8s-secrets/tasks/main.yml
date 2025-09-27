@@ -1,0 +1,10 @@
+---
+- name: Create Neo4j credentials secret
+  kubernetes.core.k8s:
+    state: present
+    namespace: projet-app
+    kind: Secret
+    name: neo4j-credentials
+    data:
+      NEO4J_USER: "{{ 'neo4j' | b64encode }}"
+      NEO4J_PASSWORD: "{{ neo4j_password | b64encode }}"

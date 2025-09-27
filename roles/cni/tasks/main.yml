@@ -1,0 +1,10 @@
+---
+- name: Apply Flannel manifest
+  ansible.builtin.command: >
+    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  register: apply_flannel
+  retries: 3
+  delay: 5
+  until: apply_flannel.rc == 0

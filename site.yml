@@ -1,0 +1,28 @@
+---
+- name: Préparer tous les nœuds (common + containerd + kubeadm)
+  hosts: kubecluster
+  become: true
+  roles:
+    - role: common
+    - role: containerd
+    - role: kubeadm
+
+- name: Initialiser le master
+  hosts: masters
+  become: true
+  roles:
+    - role: master
+    - role: cni          # installe Flannel ou Calico
+    - role: ingress
+
+- name: Joindre les workers
+  hosts: workers
+  become: true
+  roles:
+    - role: worker
+
+- name: Appliquer secrets k8s (optionnel)
+  hosts: masters
+  become: true
+  roles:
+    - role: k8s-secrets

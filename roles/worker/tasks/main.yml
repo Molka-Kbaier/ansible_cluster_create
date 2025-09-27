@@ -1,0 +1,12 @@
+---
+- name: Copy join script from master
+  ansible.builtin.fetch:
+    src: /tmp/kubeadm-join.sh
+    dest: /tmp/kubeadm-join-{{ inventory_hostname }}.sh
+    flat: yes
+  delegate_to: "{{ groups['masters'][0] }}"
+
+- name: Run kubeadm join
+  ansible.builtin.command: bash /tmp/kubeadm-join-{{ inventory_hostname }}.sh
+  args:
+    creates: /etc/kubernetes/kubelet.conf

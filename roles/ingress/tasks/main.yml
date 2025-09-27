@@ -1,0 +1,16 @@
+---
+- name: Deploy ingress-nginx (provider cloud manifest)
+  ansible.builtin.command: >
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.6/deploy/static/provider/cloud/deploy.yaml
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  register: ingress_apply
+  retries: 3
+  delay: 5
+  until: ingress_apply.rc == 0
+
+- name: Wait for ingress pods ready
+  ansible.builtin.shell: |
+    kubectl -n ingress-nginx wait --for=condition=available deploy -l app.kubernetes.io/name=ingress-nginx --timeout=120s
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf

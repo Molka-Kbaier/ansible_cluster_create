@@ -1,0 +1,35 @@
+---
+- name: Render kubeadm config
+  ansible.builtin.template:
+    src: kubeadm-config.yaml.j2
+    dest: /tmp/kubeadm-config.yaml
+  vars:
+    master_ip: "{{ ansible_host }}"
+    kubernetes_version: "{{ kubernetes_version | default('v1.30.14') }}"
+    pod_network_cidr: "{{ pod_network_cidr | default('10.244.0.0/16') }}"
+
+- name: kubeadm init
+  ansible.builtin.command: kubeadm init --config /tmp/kubeadm-config.yaml --upload-certs
+  args:
+    creates: /etc/kubernetes/admin.conf
+  register: kubeadm_init
+
+- name: Copy admin.conf
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: yes
+    mode: '0644'
+
+- name: Create join command
+  ansible.builtin.command: kubeadm token create --print-join-command
+  register: join_cmd
+  changed_when: false
+
+- name: Save join command
+  ansible.builtin.copy:
+    dest: /tmp/kubeadm-join.sh
+    content: |
+      #!/bin/bash
+      {{ join_cmd.stdout }}
+    mode: '0755'

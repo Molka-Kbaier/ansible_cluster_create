@@ -1,0 +1,30 @@
+---
+- name: Add kubernetes apt key
+  ansible.builtin.command: >
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Add kubernetes apt repo
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/kubernetes.list
+    content: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Install kubelet kubeadm (kubectl only on master)
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ ['kubelet','kubeadm'] + (['kubectl'] if inventory_hostname in groups['masters'] else []) }}"
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Hold kube packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    mark: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
